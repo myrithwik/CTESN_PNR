@@ -17,18 +17,18 @@ using Plots
 using LinearAlgebra
 
 # load the data
-trainLen = 2000
-testLen = 2000
+trainLen = 1000
+testLen = 4000
 initLen = 100
 data = readdlm("SampleESN/MackeyGlass_t17.txt")
 
 # plot some of it
 # sample plot
-p1 = plot(data[1:1000], leg=false, title="A sample of data", reuse=false)
+p1 = plot(data[1:2000], leg=false, title="A sample of data", reuse=false)
 
 # generate the ESN reservoir
 inSize = outSize = 1
-resSize = 1000
+resSize = 3000
 a = 0.3 # leaking rate
 
 
@@ -71,18 +71,22 @@ Wout = transpose((X * transpose(X) + reg * I) \ (X * transpose(Yt)))
 # because x is initialized with training data and we continue from there.
 Y = zeros(outSize, testLen)
 u = data[trainLen + 1]
+print(size(x))
+print(size(Wout))
 for t = 1:testLen
 	global x = (1 - a) .* x .+ a .* tanh.(Win * [1;u] .+ W * x)
 	y = Wout * [1;u;x]
 	Y[:,t] = y
+	###### Look Into this Part of Code
 	# generative mode:
-	global u = y
+	# global u = y
 	# this would be a predictive mode:
-	# global u = data[trainLen+t+1]
+	global u = data[trainLen + t + 1]
+	### Understand this above Block
 end
 
 # compute MSE for the first errorLen time steps
-errorLen = 500
+errorLen = testLen
 mse = sum( abs2.(data[trainLen + 2:trainLen + errorLen + 1] .-
     Y[1,1:errorLen]) ) / errorLen
 println("MSE = $mse")
