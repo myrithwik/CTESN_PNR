@@ -17,6 +17,7 @@ using Plots
 using LinearAlgebra
 
 function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, Wout21)
+    resultFile = open("./SamplePNR/results.txt", "w")
     trainLen = trainLen1
     testLen = testLen1
     initLen = initLen1
@@ -39,9 +40,11 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
     Win = (rand(resSize, 1 + inSize) .- 0.5) .* 1
     W = rand(resSize, resSize) .- 0.5
 # normalizing and setting spectral radius
+    write(resultFile, "Computing spectral radius...")
     print("Computing spectral radius...")
     rhoW = maximum(abs.(eigvals(W)))
     println("done.")
+    write(resultFile, "done.\n")
     W .*= (1.25 / rhoW)
 
 # allocated memory for the design (collected states) matrix
@@ -62,6 +65,7 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
     threshold = 1.9
     alph = 0.001
     for iterations = 1:numIterations
+        write(resultFile, "Iterations: $iterations \n")
         println("Iterations: ", iterations)
         for t = 1:trainLen
             u = data[t]
@@ -111,13 +115,16 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
 	# generative mode:
 	    u = y
 	# this would be a predictive mode:
-	# global u = data[trainLen+t+1]
+	    # u = data[trainLen + t + 1]
     end
 # compute MSE for the first errorLen time steps
     errorLen = testLen
     mse = sum( abs2.(data[trainLen + 2:trainLen + errorLen + 1] .-
     Y[1,1:errorLen]) ) / errorLen
     println("MSE = $mse")
+    write(resultFile, "MSE = $mse\n")
+    close(resultFile)
+
 
 # plot some signals
     p2 = plot(data[trainLen + 2:trainLen + testLen + 1], c=RGB(0, 0.75, 0), label="Target signal", reuse=false)
@@ -135,6 +142,7 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
 end
 
 # initialize Wout
+resSize = 30000
 Wout = zeros(1, resSize + 2)
-PNR(1000, 4000, 100, "SamplePNR/MackeyGlass_PNR.txt", 3000, 10, Wout)
+PNR(1000, 4000, 100, "SamplePNR/MackeyGlass_PNR.txt", 30000, 10, Wout)
 # trainLen, testLen, initLen, dataFile, resSize, numIterations, Wout

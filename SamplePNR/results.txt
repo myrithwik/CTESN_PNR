@@ -1,0 +1,12 @@
+Computing spectral radius...done.
+Iterations: 1 
+Iterations: 2 
+Iterations: 3 
+Iterations: 4 
+Iterations: 5 
+Iterations: 6 
+Iterations: 7 
+Iterations: 8 
+Iterations: 9 
+Iterations: 10 
+MSE = 0.08144503012486078
