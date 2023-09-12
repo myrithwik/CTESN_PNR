@@ -8,7 +8,8 @@
 - Repository Work:
   - In this repository a sample ESN is created to predict the Mackey-Glass chaotic time series
   - PNR is then impleneted on top of the simple ESN and the performance is compared to the original performance
-# CTESN_GBS (In the GradientBasedSampling Folder)
+# CTESN_GBS
+**(In the GradientBasedSampling Folder)**
 - Objective:
   - Using knowledge of gradients select the initial training sampling points to help more effectively train the CTESN
 - Background:
