@@ -13,6 +13,7 @@ Distributed under MIT license https://opensource.org/licenses/MIT =#
 
 using DelimitedFiles
 import Random
+import Statistics
 using Plots
 using LinearAlgebra
 
@@ -62,7 +63,7 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
     x = zeros(resSize, 1)
 
 # PNR Variables
-    threshold = 1.9
+    threshold = 0.75
     alph = 0.001
     for iterations = 1:numIterations
         write(resultFile, "Iterations: $iterations \n")
@@ -97,6 +98,7 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
             if node > threshold && node <= resSize
                 for val in eachindex(W[node])
                     W[node, val] = (1 + alph) * W[node, val]
+                # Updating the recurrent connections for each Wout value that is above the threshold
                 # Don't really know where the recurrent connections are (row or col)
                 end
             end
@@ -119,10 +121,17 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
     end
 # compute MSE for the first errorLen time steps
     errorLen = testLen
-    mse = sum( abs2.(data[trainLen + 2:trainLen + errorLen + 1] .-
-    Y[1,1:errorLen]) ) / errorLen
-    println("MSE = $mse")
-    write(resultFile, "MSE = $mse\n")
+    mse = abs.(data[trainLen + 2:trainLen + errorLen + 1] .-
+    Y[1,1:errorLen])
+    # println("MSE = $mse")
+    # top10  = partialsort(mse, floor(Int64, errorLen / 10), rev=true)
+    sorted = sort(mse, rev=true)
+    top5 = sorted[1:floor(Int64, errorLen / 20)]
+    println("Worst Error: ", top5[1])
+    println("Average Worst Error: ", Statistics.mean(top5))
+    write(resultFile, "Sorted Error Array = $top5 \n")
+    write(resultFile, "Worst Error: ", top5[1], "\n")
+    write(resultFile, "Sorted Error Array: ", Statistics.mean(top5), "\n")
     close(resultFile)
 
 
@@ -131,8 +140,11 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
     plot!(transpose(Y), c=:blue, label="Free-running predicted signal")
     title!("Target and generated signals y(n) starting at n=0")
 
-    p3 = plot(transpose(X[1:20,1:200]), leg=false)
-    title!("Some reservoir activations x(n)")
+    # p3 = plot(transpose(X[1:20,1:200]), leg=false)
+    # title!("Some reservoir activations x(n)")
+
+    p3 = plot(sorted[1:floor(Int64, errorLen / 20)])
+    title!("Error for Each Point)")
 
     p4 = bar(transpose(Wout2), leg=false)
     title!("Output weights Wout")
@@ -142,7 +154,7 @@ function PNR(trainLen1, testLen1, initLen1, dataFile, resSize1, numIterations1, 
 end
 
 # initialize Wout
-resSize = 30000
+resSize = 4000
 Wout = zeros(1, resSize + 2)
-PNR(1000, 4000, 100, "SamplePNR/MackeyGlass_PNR.txt", 30000, 10, Wout)
+@time PNR(1000, 4000, 100, "SamplePNR/MackeyGlass_PNR.txt", 4000, 5, Wout)
 # trainLen, testLen, initLen, dataFile, resSize, numIterations, Wout

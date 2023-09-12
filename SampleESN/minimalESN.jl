@@ -15,7 +15,9 @@ using DelimitedFiles
 import Random
 using Plots
 using LinearAlgebra
+using Base
 
+@time begin
 # load the data
 trainLen = 1000
 testLen = 4000
@@ -28,7 +30,7 @@ p1 = plot(data[1:2000], leg=false, title="A sample of data", reuse=false)
 
 # generate the ESN reservoir
 inSize = outSize = 1
-resSize = 3000
+resSize = 4000
 a = 0.3 # leaking rate
 
 
@@ -72,35 +74,47 @@ Wout = transpose((X * transpose(X) + reg * I) \ (X * transpose(Yt)))
 Y = zeros(outSize, testLen)
 u = data[trainLen + 1]
 print(size(x))
-print(size(Wout))
+println(size(Wout))
 for t = 1:testLen
 	global x = (1 - a) .* x .+ a .* tanh.(Win * [1;u] .+ W * x)
 	y = Wout * [1;u;x]
 	Y[:,t] = y
 	###### Look Into this Part of Code
 	# generative mode:
-	# global u = y
+	 global u = y
 	# this would be a predictive mode:
-	global u = data[trainLen + t + 1]
+	# global u = data[trainLen + t + 1]
 	### Understand this above Block
 end
 
 # compute MSE for the first errorLen time steps
 errorLen = testLen
-mse = sum( abs2.(data[trainLen + 2:trainLen + errorLen + 1] .-
-    Y[1,1:errorLen]) ) / errorLen
-println("MSE = $mse")
+# mse = sum( abs2.(data[trainLen + 2:trainLen + errorLen + 1] .-
+# 	Y[1,1:errorLen]) ) / errorLen
+mse = abs.(data[trainLen + 2:trainLen + errorLen + 1] .-
+    Y[1,1:errorLen])
+# println("MSE = $mse")
+
+# top10  = partialsort(mse, floor(Int64, errorLen / 10), rev=true)
+sorted = sort(mse, rev=true)
+top5 = sorted[1:floor(Int64, errorLen / 20)]
+println("Worst Error: ", top5[1])
+println("Average Worst Error: ", Statistics.mean(top5))
 
 # plot some signals
 p2 = plot(data[trainLen + 2:trainLen + testLen + 1], c=RGB(0, 0.75, 0), label="Target signal", reuse=false)
 plot!(transpose(Y), c=:blue, label="Free-running predicted signal")
 title!("Target and generated signals y(n) starting at n=0")
 
-p3 = plot(transpose(X[1:20,1:200]), leg=false)
-title!("Some reservoir activations x(n)")
+# p3 = plot(transpose(X[1:20,1:200]), leg=false)
+# title!("Some reservoir activations x(n)")
+
+p3 = plot(sorted[1:floor(Int64, errorLen / 20)])
+title!("Error for Each Point)")
 
 p4 = bar(transpose(Wout), leg=false)
 title!("Output weights Wout")
 
 # display all 4 plots
 plot(p1, p2, p3, p4, size=(1200, 800))
+end
